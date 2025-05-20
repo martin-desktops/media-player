@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Drag & Drop Video Player</title>
+  <link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css" />
+  <style>
+    body {
+      margin: 0;
+      background: #111;
+      color: white;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      height: 100vh;
+      justify-content: center;
+      font-family: sans-serif;
+    }
+    #dropzone {
+      border: 2px dashed #666;
+      border-radius: 10px;
+      padding: 2rem;
+      text-align: center;
+      width: 80%;
+      max-width: 600px;
+      margin-bottom: 1rem;
+      color: #aaa;
+      cursor: pointer;
+    }
+    video {
+      width: 100%;
+      border-radius: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div id="dropzone">Drop a video file here or click to select</div>
+  <video id="player" playsinline controls></video>
+
+  <script src="https://cdn.plyr.io/3.7.8/plyr.polyfilled.js"></script>
+  <script>
+    const player = new Plyr('#player', {
+      controls: ['play', 'progress', 'current-time', 'mute', 'volume', 'settings', 'fullscreen'],
+      settings: ['speed'],
+      keyboard: { focused: true, global: true },
+    });
+
+    const dropzone = document.getElementById('dropzone');
+    const video = document.getElementById('player');
+
+    dropzone.addEventListener('click', () => {
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = 'video/*';
+      input.onchange = e => loadFile(e.target.files[0]);
+      input.click();
+    });
+
+    ['dragenter', 'dragover'].forEach(evt => dropzone.addEventListener(evt, e => {
+      e.preventDefault();
+      dropzone.style.borderColor = '#4fc3f7';
+    }));
+
+    ['dragleave', 'drop'].forEach(evt => dropzone.addEventListener(evt, e => {
+      e.preventDefault();
+      dropzone.style.borderColor = '#666';
+    }));
+
+    dropzone.addEventListener('drop', e => {
+      const file = e.dataTransfer.files[0];
+      if (file && file.type.startsWith('video/')) loadFile(file);
+    });
+
+    function loadFile(file) {
+      const url = URL.createObjectURL(file);
+      video.src = url;
+      player.play();
+      dropzone.style.display = 'none';
+    }
+
+    document.addEventListener('keydown', e => {
+      const tag = e.target.tagName.toLowerCase();
+      if (tag === 'input' || tag === 'textarea' || e.target.isContentEditable) return;
+
+      switch (e.key) {
+        case 'ArrowLeft':
+          player.currentTime = Math.max(0, player.currentTime - 5);
+          break;
+        case 'ArrowRight':
+          player.currentTime = Math.min(player.duration, player.currentTime + 5);
+          break;
+        case '[':
+          player.speed = Math.max(0.25, player.speed - 0.25);
+          break;
+        case ']':
+          player.speed = Math.min(4, player.speed + 0.25);
+          break;
+        case 'r':
+        case 'R':
+          player.speed = 1.0;
+          break;
+      }
+
+      if (e.code === 'ShiftLeft' || e.code === 'ShiftRight') {
+        e.preventDefault();
+        player.togglePlay();
+      }
+    });
+  </script>
+</body>
+</html>
