@@ -9,7 +9,7 @@
       box-sizing: border-box;
     }
 
-    body, html {
+    html, body {
       margin: 0;
       padding: 0;
       width: 100%;
@@ -30,7 +30,6 @@
       justify-content: center;
       text-align: center;
       border: 4px dashed #666;
-      border-radius: 0;
       color: #aaa;
       cursor: pointer;
       z-index: 10;
@@ -89,9 +88,18 @@
     function loadFile(file) {
       const url = URL.createObjectURL(file);
       video.src = url;
-      player.play();
-      dropzone.style.display = 'none';
       video.classList.add('show');
+      dropzone.style.display = 'none';
+      player.play();
+
+      // Request fullscreen
+      const requestFullscreen =
+        document.documentElement.requestFullscreen ||
+        document.documentElement.webkitRequestFullscreen ||
+        document.documentElement.mozRequestFullScreen ||
+        document.documentElement.msRequestFullscreen;
+
+      if (requestFullscreen) requestFullscreen.call(document.documentElement);
     }
 
     document.addEventListener('keydown', e => {
