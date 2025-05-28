@@ -38,6 +38,8 @@
       cursor: pointer;
       z-index: 10;
       padding: 40px; /* Increased padding for more breathing room */
+	  border-radius: 40px;
+	  padding: 30px;
     }
 
     /* Container for the main instructional text */
@@ -60,13 +62,12 @@
     /* Container for the button at the bottom */
     #dropzone .launch-screen-button-container {
       width: 100%; /* Occupy available width, helps in centering the button if needed */
-      /* The button will be centered due to #dropzone's align-items: center and text-align: center */
     }
 
     #player-container {
       width: 100%;
       height: 100%;
-      display: flex; /* for centering video if not fullscreen */
+      display: none; /* MODIFIED: Initially hidden */
       align-items: center;
       justify-content: center;
     }
@@ -92,10 +93,9 @@
       text-decoration: none;
       display: inline-block;
       font-size: 1rem; /* Using rem for better accessibility */
-      /* margin-top: 20px; Removed as spacing is now handled by flex layout */
       cursor: pointer;
       border-radius: 5px;
-      z-index: 11; /* Ensure it's above dropzone text if overlapping slightly (though less likely now) */
+      z-index: 11;
     }
     #trim-button:hover {
         background-color: #45a049;
@@ -103,7 +103,6 @@
   </style>
 </head>
 <body>
-  <!-- Updated dropzone structure -->
   <div id="dropzone">
     <div class="launch-screen-text-container">
       <span class="launch-screen-text">Drop a video file anywhere or click to select</span>
@@ -120,6 +119,7 @@
   <script src="https://cdn.plyr.io/3.7.8/plyr.polyfilled.js"></script>
   <script>
     const playerElement = document.getElementById('player');
+    const playerContainer = document.getElementById('player-container'); // Get reference to player container
     const player = new Plyr(playerElement, {
       controls: ['play', 'progress', 'current-time', 'mute', 'volume', 'settings', 'fullscreen'],
       settings: ['speed'],
@@ -142,12 +142,11 @@
     function loadFile(file) {
       if (!file || !file.type.startsWith('video/')) {
         console.error('Invalid file type provided:', file ? file.type : 'undefined');
-        // Adjust to target the span inside dropzone for text content
-        const dropzoneTextElement = dropzone.querySelector('.launch-screen-text'); // Use the class
+        const dropzoneTextElement = dropzone.querySelector('.launch-screen-text');
         if (dropzoneTextElement) {
             dropzoneTextElement.textContent = 'Invalid file. Please drop an MP4 video.';
         }
-        dropzone.style.borderColor = '#f44336'; // Red border for error
+        dropzone.style.borderColor = '#f44336';
         setTimeout(() => {
           if (dropzoneTextElement) {
               dropzoneTextElement.textContent = 'Drop a video file anywhere or click to select';
@@ -159,27 +158,26 @@
 
       const url = URL.createObjectURL(file);
       playerElement.src = url;
-      playerElement.classList.add('show');
-      dropzone.style.display = 'none'; // Hide the entire dropzone, including the button
+      playerElement.classList.add('show'); // Make the <video> element itself display: block
+
+      playerContainer.style.display = 'flex'; // MODIFIED: Show the player container
+      dropzone.style.display = 'none';      // Hide the entire dropzone
 
       player.once('ready', () => {
         player.play();
       });
-      if(player.ready) {
+      if(player.ready) { // Handles case where 'ready' might fire before listener if src is set fast
         player.play();
       }
     }
 
     dropzone.addEventListener('click', (e) => {
-      // Prevent triggering file dialog if the button or its container was clicked
       if (e.target === trimButton || trimButton.contains(e.target) || (e.target.classList && e.target.classList.contains('launch-screen-button-container'))) {
-        // If click is on button, or inside button, or on button container, let button's own handler work
-        // The trimButton handler already has e.stopPropagation()
         return;
       }
       const input = document.createElement('input');
       input.type = 'file';
-      input.accept = 'video/mp4,video/*'; // You can be more specific if needed e.g. 'video/mp4'
+      input.accept = 'video/mp4,video/*';
       input.onchange = ev => {
         if (ev.target.files && ev.target.files.length > 0) {
           loadFile(ev.target.files[0]);
@@ -230,7 +228,7 @@
         }
       }
 
-      if (!playerElement.classList.contains('show') || player.source == null) return;
+      if (!playerElement.classList.contains('show') || player.source == null || playerContainer.style.display === 'none') return; // Also check if player container is visible
 
       switch (e.key.toLowerCase()) {
         case 'arrowleft':
