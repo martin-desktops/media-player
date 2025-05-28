@@ -25,10 +25,10 @@
     /* Updated Dropzone styles */
     #dropzone {
       position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
+      top: 20px;
+      left: 20px;
+      right: 20px;
+      bottom: 20px;
       display: flex;
       flex-direction: column;
       justify-content: space-between; /* Pushes text area up and button area down */
@@ -39,7 +39,6 @@
       z-index: 10;
       padding: 40px; /* Increased padding for more breathing room */
 	  border-radius: 40px;
-	  margin: 40px;
     }
 
     /* Container for the main instructional text */
@@ -123,7 +122,7 @@
     const player = new Plyr(playerElement, {
       controls: ['play', 'progress', 'current-time', 'mute', 'volume', 'settings', 'fullscreen'],
       settings: ['speed'],
-      keyboard: { focused: true, global: true },
+      keyboard: { focused: true, global: false }, // *** MODIFIED LINE: Set global to false ***
     });
 
     const dropzone = document.getElementById('dropzone');
