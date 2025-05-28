@@ -1,0 +1,40 @@
+{
+  "name": "Fullscreen Video Player",
+  "short_name": "VideoPlayer",
+  "description": "A simple PWA video player that supports drag & drop and file opening.",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#111111",
+  "theme_color": "#4fc3f7",
+  "orientation": "landscape-primary",
+  "icons": [
+    {
+      "src": "icons/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "file_handlers": [
+    {
+      "action": ".",
+      "accept": {
+        "video/mp4": [".mp4"]
+      },
+      "icons": [
+        {
+          "src": "icons/mp4-handler-icon.png",
+          "sizes": "256x256",
+          "type": "image/png"
+        }
+      ],
+      "launch_type": "single-client"
+    }
+  ]
+}

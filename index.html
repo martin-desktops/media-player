@@ -2,8 +2,10 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Fullscreen Drag & Drop Video Player</title>
   <link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css" />
+  <link rel="manifest" href="manifest.json">
   <style>
     * {
       box-sizing: border-box;
@@ -17,6 +19,7 @@
       background: #111;
       color: white;
       font-family: sans-serif;
+      overflow: hidden; /* Prevent scrollbars when video is full */
     }
 
     #dropzone {
@@ -35,11 +38,19 @@
       z-index: 10;
     }
 
+    #player-container {
+        width: 100%;
+        height: 100%;
+        display: flex; /* for centering video if not fullscreen */
+        align-items: center;
+        justify-content: center;
+    }
+
     video {
-      display: none;
-      width: 100%;
-      height: auto;
-      border-radius: 10px;
+      display: none; /* Hidden by default */
+      max-width: 100%; /* Ensure video fits container width */
+      max-height: 100%; /* Ensure video fits container height */
+      border-radius: 10px; /* Can be overridden by Plyr */
     }
 
     video.show {
@@ -49,87 +60,182 @@
 </head>
 <body>
   <div id="dropzone">Drop a video file anywhere or click to select</div>
-  <video id="player" playsinline controls></video>
+  <div id="player-container">
+    <video id="player" playsinline controls></video>
+  </div>
 
   <script src="https://cdn.plyr.io/3.7.8/plyr.polyfilled.js"></script>
   <script>
-    const player = new Plyr('#player', {
+    const playerElement = document.getElementById('player');
+    const player = new Plyr(playerElement, {
       controls: ['play', 'progress', 'current-time', 'mute', 'volume', 'settings', 'fullscreen'],
       settings: ['speed'],
       keyboard: { focused: true, global: true },
     });
 
     const dropzone = document.getElementById('dropzone');
-    const video = document.getElementById('player');
+
+    function loadFile(file) {
+      if (!file || !file.type.startsWith('video/')) {
+        console.error('Invalid file type provided:', file ? file.type : 'undefined');
+        dropzone.textContent = 'Invalid file. Please drop an MP4 video.';
+        dropzone.style.borderColor = '#f44336'; // Red border for error
+        setTimeout(() => {
+            dropzone.textContent = 'Drop a video file anywhere or click to select';
+            dropzone.style.borderColor = '#666';
+        }, 3000);
+        return;
+      }
+
+      const url = URL.createObjectURL(file);
+      playerElement.src = url;
+      playerElement.classList.add('show');
+      dropzone.style.display = 'none';
+      
+      // The Plyr player might take a moment to initialize with the new source.
+      // Playing directly or after a short delay might be more reliable.
+      player.once('ready', () => {
+        player.play();
+      });
+      if(player.ready) { // If already ready (e.g. subsequent file loads)
+          player.play();
+      }
+
+
+      // Optional: Auto-fullscreen
+      // Note: This might be blocked by browsers if not triggered by a direct recent user gesture.
+      // Launching via "Open with" is generally considered such a gesture.
+      // const playerContainer = document.getElementById('player-container');
+      // if (player.fullscreen.supported && playerContainer.requestFullscreen) {
+      //    player.fullscreen.enter(); // Use Plyr's fullscreen if available
+      // } else if (document.documentElement.requestFullscreen) {
+      //    document.documentElement.requestFullscreen();
+      // }
+    }
 
     dropzone.addEventListener('click', () => {
       const input = document.createElement('input');
       input.type = 'file';
-      input.accept = 'video/*';
-      input.onchange = e => loadFile(e.target.files[0]);
+      input.accept = 'video/mp4,video/*'; // Prioritize mp4 but allow other video types
+      input.onchange = e => {
+        if (e.target.files && e.target.files.length > 0) {
+          loadFile(e.target.files[0]);
+        }
+      };
       input.click();
     });
 
     ['dragenter', 'dragover'].forEach(evt => dropzone.addEventListener(evt, e => {
       e.preventDefault();
+      e.stopPropagation();
       dropzone.style.borderColor = '#4fc3f7';
     }));
 
     ['dragleave', 'drop'].forEach(evt => dropzone.addEventListener(evt, e => {
       e.preventDefault();
+      e.stopPropagation();
       dropzone.style.borderColor = '#666';
     }));
 
     dropzone.addEventListener('drop', e => {
-      const file = e.dataTransfer.files[0];
-      if (file && file.type.startsWith('video/')) loadFile(file);
+      if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+        loadFile(e.dataTransfer.files[0]);
+        // Clean up dragged files
+        if (e.dataTransfer.items) {
+            e.dataTransfer.items.clear();
+        } else {
+            e.dataTransfer.clearData();
+        }
+      }
     });
 
-    function loadFile(file) {
-      const url = URL.createObjectURL(file);
-      video.src = url;
-      video.classList.add('show');
-      dropzone.style.display = 'none';
-      player.play();
-
-      // Request fullscreen
-      const requestFullscreen =
-        document.documentElement.requestFullscreen ||
-        document.documentElement.webkitRequestFullscreen ||
-        document.documentElement.mozRequestFullScreen ||
-        document.documentElement.msRequestFullscreen;
-
-      if (requestFullscreen) requestFullscreen.call(document.documentElement);
-    }
-
     document.addEventListener('keydown', e => {
-      const tag = e.target.tagName.toLowerCase();
-      if (tag === 'input' || tag === 'textarea' || e.target.isContentEditable) return;
+      const activeElement = document.activeElement;
+      const isInputFocused = activeElement && (activeElement.tagName.toLowerCase() === 'input' ||
+                           activeElement.tagName.toLowerCase() === 'textarea' ||
+                           activeElement.isContentEditable ||
+                           activeElement.closest('.plyr__controls')); // Avoid interference if Plyr controls are focused
+
+      if (isInputFocused) return;
+
+      // Only apply custom shortcuts if video is loaded and player is not in fullscreen text input mode
+      if (!playerElement.classList.contains('show') || player.source == null) return;
+
 
       switch (e.key) {
         case 'ArrowLeft':
+          e.preventDefault();
           player.currentTime = Math.max(0, player.currentTime - 5);
           break;
         case 'ArrowRight':
+          e.preventDefault();
           player.currentTime = Math.min(player.duration, player.currentTime + 5);
           break;
         case '[':
+          e.preventDefault();
           player.speed = Math.max(0.25, player.speed - 0.25);
           break;
         case ']':
+          e.preventDefault();
           player.speed = Math.min(4, player.speed + 0.25);
           break;
         case 'r':
         case 'R':
+          e.preventDefault();
           player.speed = 1.0;
           break;
+        case ' ': // Space bar for play/pause
+            if (playerElement.classList.contains('show')) { // only if video is loaded
+                e.preventDefault();
+                player.togglePlay();
+            }
+            break;
+        case 'f': // Fullscreen toggle
+        case 'F':
+            if (playerElement.classList.contains('show')) {
+                e.preventDefault();
+                player.fullscreen.toggle();
+            }
+            break;
+        case 'm': // Mute toggle
+        case 'M':
+            if (playerElement.classList.contains('show')) {
+                e.preventDefault();
+                player.muted = !player.muted;
+            }
+            break;
       }
 
-      if (e.code === 'ShiftLeft' || e.code === 'ShiftRight') {
-        e.preventDefault();
-        player.togglePlay();
-      }
+      // Shift (original code used shift for play/toggle, changed to space, but keeping the logic structure if needed)
+      // if (e.code === 'ShiftLeft' || e.code === 'ShiftRight') {
+      //   e.preventDefault();
+      //   player.togglePlay();
+      // }
     });
+
+    // PWA File Handling
+    if ('launchQueue' in window) {
+      launchQueue.setConsumer(async (launchParams) => {
+        if (launchParams.files && launchParams.files.length > 0) {
+          const fileHandle = launchParams.files[0];
+          const file = await fileHandle.getFile();
+          loadFile(file);
+        }
+      });
+    }
+
+    // Service Worker Registration
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js')
+          .then(registration => {
+            console.log('ServiceWorker registration successful with scope: ', registration.scope);
+          })
+          .catch(err => {
+            console.log('ServiceWorker registration failed: ', err);
+          });
+      });
+    }
   </script>
 </body>
 </html>
