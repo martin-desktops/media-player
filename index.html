@@ -22,6 +22,7 @@
       overflow: hidden; /* Prevent scrollbars when video is full */
     }
 
+    /* Updated Dropzone styles */
     #dropzone {
       position: absolute;
       top: 0;
@@ -29,15 +30,37 @@
       right: 0;
       bottom: 0;
       display: flex;
-      flex-direction: column; /* To stack drop text and button */
-      align-items: center;
-      justify-content: center;
-      text-align: center;
+      flex-direction: column;
+      justify-content: space-between; /* Pushes text area up and button area down */
+      align-items: center; /* Center children horizontally */
+      text-align: center; /* Default text alignment for children */
       border: 4px dashed #666;
-      color: #aaa;
       cursor: pointer;
       z-index: 10;
-      padding: 20px;
+      padding: 40px; /* Increased padding for more breathing room */
+    }
+
+    /* Container for the main instructional text */
+    #dropzone .launch-screen-text-container {
+      flex-grow: 1; /* Allows this container to expand */
+      display: flex;
+      flex-direction: column;
+      justify-content: center; /* Vertically center the text within this container */
+      align-items: center; /* Horizontally center the text */
+      width: 100%; /* Occupy available width */
+    }
+
+    /* Styling for the main instruction text */
+    #dropzone .launch-screen-text {
+      font-size: 1.8em; /* Larger, more prominent text */
+      color: #ccc;       /* Lighter color for better contrast/visibility */
+      max-width: 90%;   /* Ensure text wraps nicely and doesn't touch edges */
+    }
+
+    /* Container for the button at the bottom */
+    #dropzone .launch-screen-button-container {
+      width: 100%; /* Occupy available width, helps in centering the button if needed */
+      /* The button will be centered due to #dropzone's align-items: center and text-align: center */
     }
 
     #player-container {
@@ -59,19 +82,20 @@
       display: block;
     }
 
+    /* Updated Trim Button styles */
     #trim-button {
       background-color: #4CAF50; /* Green */
       border: none;
       color: white;
-      padding: 10px 20px;
+      padding: 12px 25px; /* Slightly adjusted padding for a good size */
       text-align: center;
       text-decoration: none;
       display: inline-block;
-      font-size: 16px;
-      margin-top: 20px; /* Space above the button */
+      font-size: 1rem; /* Using rem for better accessibility */
+      /* margin-top: 20px; Removed as spacing is now handled by flex layout */
       cursor: pointer;
       border-radius: 5px;
-      z-index: 11; /* Ensure it's above dropzone text if overlapping slightly */
+      z-index: 11; /* Ensure it's above dropzone text if overlapping slightly (though less likely now) */
     }
     #trim-button:hover {
         background-color: #45a049;
@@ -79,10 +103,16 @@
   </style>
 </head>
 <body>
+  <!-- Updated dropzone structure -->
   <div id="dropzone">
-    <span>Drop a video file anywhere or click to select</span>
-    <button id="trim-button">Open Video Trimmer (E)</button>
+    <div class="launch-screen-text-container">
+      <span class="launch-screen-text">Drop a video file anywhere or click to select</span>
+    </div>
+    <div class="launch-screen-button-container">
+      <button id="trim-button">Open Video Trimmer (E)</button>
+    </div>
   </div>
+
   <div id="player-container">
     <video id="player" playsinline controls></video>
   </div>
@@ -113,14 +143,14 @@
       if (!file || !file.type.startsWith('video/')) {
         console.error('Invalid file type provided:', file ? file.type : 'undefined');
         // Adjust to target the span inside dropzone for text content
-        const dropzoneText = dropzone.querySelector('span');
-        if (dropzoneText) {
-            dropzoneText.textContent = 'Invalid file. Please drop an MP4 video.';
+        const dropzoneTextElement = dropzone.querySelector('.launch-screen-text'); // Use the class
+        if (dropzoneTextElement) {
+            dropzoneTextElement.textContent = 'Invalid file. Please drop an MP4 video.';
         }
         dropzone.style.borderColor = '#f44336'; // Red border for error
         setTimeout(() => {
-          if (dropzoneText) {
-              dropzoneText.textContent = 'Drop a video file anywhere or click to select';
+          if (dropzoneTextElement) {
+              dropzoneTextElement.textContent = 'Drop a video file anywhere or click to select';
           }
           dropzone.style.borderColor = '#666';
         }, 3000);
@@ -141,13 +171,15 @@
     }
 
     dropzone.addEventListener('click', (e) => {
-      // Prevent triggering file dialog if the button was clicked
-      if (e.target === trimButton) {
+      // Prevent triggering file dialog if the button or its container was clicked
+      if (e.target === trimButton || trimButton.contains(e.target) || (e.target.classList && e.target.classList.contains('launch-screen-button-container'))) {
+        // If click is on button, or inside button, or on button container, let button's own handler work
+        // The trimButton handler already has e.stopPropagation()
         return;
       }
       const input = document.createElement('input');
       input.type = 'file';
-      input.accept = 'video/mp4,video/*';
+      input.accept = 'video/mp4,video/*'; // You can be more specific if needed e.g. 'video/mp4'
       input.onchange = ev => {
         if (ev.target.files && ev.target.files.length > 0) {
           loadFile(ev.target.files[0]);
@@ -186,26 +218,21 @@
                                 activeElement.isContentEditable ||
                                 activeElement.closest('.plyr__controls'));
 
-      if (isInputFocused && e.key.toLowerCase() !== 'e') return; // Allow 'e' even if focused, unless it's a text input for typing 'e'
+      if (isInputFocused && e.key.toLowerCase() !== 'e') return;
 
-      // New keybind for 'e' - generally available
       if (e.key.toLowerCase() === 'e') {
-        // Check if the focus is on a text input field; if so, don't open the trimmer.
-        // This is a more specific check for 'e' to avoid hijacking typing.
         if (activeElement && (activeElement.tagName.toLowerCase() === 'input' && activeElement.type !== 'button' && activeElement.type !== 'submit' && activeElement.type !== 'range') || activeElement.tagName.toLowerCase() === 'textarea' || activeElement.isContentEditable) {
             // Do nothing if user is likely typing 'e' into an input field.
         } else {
             e.preventDefault();
             openVideoTrimmer();
-            return; // Key handled, exit
+            return;
         }
       }
 
-      // Only apply custom video shortcuts if video is loaded
       if (!playerElement.classList.contains('show') || player.source == null) return;
 
-      // Existing video player shortcuts
-      switch (e.key.toLowerCase()) { // Use toLowerCase for case-insensitivity
+      switch (e.key.toLowerCase()) {
         case 'arrowleft':
           e.preventDefault();
           player.currentTime = Math.max(0, player.currentTime - 5);
@@ -226,15 +253,15 @@
           e.preventDefault();
           player.speed = 1.0;
           break;
-        case ' ': // Space bar for play/pause
+        case ' ':
             e.preventDefault();
             player.togglePlay();
           break;
-        case 'f': // Fullscreen toggle
+        case 'f':
             e.preventDefault();
             player.fullscreen.toggle();
           break;
-        case 'm': // Mute toggle
+        case 'm':
             e.preventDefault();
             player.muted = !player.muted;
           break;
