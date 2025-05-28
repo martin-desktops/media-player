@@ -29,6 +29,7 @@
       right: 0;
       bottom: 0;
       display: flex;
+      flex-direction: column; /* To stack drop text and button */
       align-items: center;
       justify-content: center;
       text-align: center;
@@ -36,14 +37,15 @@
       color: #aaa;
       cursor: pointer;
       z-index: 10;
+      padding: 20px;
     }
 
     #player-container {
-        width: 100%;
-        height: 100%;
-        display: flex; /* for centering video if not fullscreen */
-        align-items: center;
-        justify-content: center;
+      width: 100%;
+      height: 100%;
+      display: flex; /* for centering video if not fullscreen */
+      align-items: center;
+      justify-content: center;
     }
 
     video {
@@ -56,10 +58,31 @@
     video.show {
       display: block;
     }
+
+    #trim-button {
+      background-color: #4CAF50; /* Green */
+      border: none;
+      color: white;
+      padding: 10px 20px;
+      text-align: center;
+      text-decoration: none;
+      display: inline-block;
+      font-size: 16px;
+      margin-top: 20px; /* Space above the button */
+      cursor: pointer;
+      border-radius: 5px;
+      z-index: 11; /* Ensure it's above dropzone text if overlapping slightly */
+    }
+    #trim-button:hover {
+        background-color: #45a049;
+    }
   </style>
 </head>
 <body>
-  <div id="dropzone">Drop a video file anywhere or click to select</div>
+  <div id="dropzone">
+    <span>Drop a video file anywhere or click to select</span>
+    <button id="trim-button">Open Video Trimmer (E)</button>
+  </div>
   <div id="player-container">
     <video id="player" playsinline controls></video>
   </div>
@@ -74,15 +97,32 @@
     });
 
     const dropzone = document.getElementById('dropzone');
+    const trimButton = document.getElementById('trim-button');
+    const videoTrimAppUrl = 'https://videotrim.app/';
+
+    function openVideoTrimmer() {
+        window.open(videoTrimAppUrl, '_blank');
+    }
+
+    trimButton.addEventListener('click', (e) => {
+        e.stopPropagation(); // Prevent dropzone click from firing
+        openVideoTrimmer();
+    });
 
     function loadFile(file) {
       if (!file || !file.type.startsWith('video/')) {
         console.error('Invalid file type provided:', file ? file.type : 'undefined');
-        dropzone.textContent = 'Invalid file. Please drop an MP4 video.';
+        // Adjust to target the span inside dropzone for text content
+        const dropzoneText = dropzone.querySelector('span');
+        if (dropzoneText) {
+            dropzoneText.textContent = 'Invalid file. Please drop an MP4 video.';
+        }
         dropzone.style.borderColor = '#f44336'; // Red border for error
         setTimeout(() => {
-            dropzone.textContent = 'Drop a video file anywhere or click to select';
-            dropzone.style.borderColor = '#666';
+          if (dropzoneText) {
+              dropzoneText.textContent = 'Drop a video file anywhere or click to select';
+          }
+          dropzone.style.borderColor = '#666';
         }, 3000);
         return;
       }
@@ -90,36 +130,27 @@
       const url = URL.createObjectURL(file);
       playerElement.src = url;
       playerElement.classList.add('show');
-      dropzone.style.display = 'none';
-      
-      // The Plyr player might take a moment to initialize with the new source.
-      // Playing directly or after a short delay might be more reliable.
+      dropzone.style.display = 'none'; // Hide the entire dropzone, including the button
+
       player.once('ready', () => {
         player.play();
       });
-      if(player.ready) { // If already ready (e.g. subsequent file loads)
-          player.play();
+      if(player.ready) {
+        player.play();
       }
-
-
-      // Optional: Auto-fullscreen
-      // Note: This might be blocked by browsers if not triggered by a direct recent user gesture.
-      // Launching via "Open with" is generally considered such a gesture.
-      // const playerContainer = document.getElementById('player-container');
-      // if (player.fullscreen.supported && playerContainer.requestFullscreen) {
-      //    player.fullscreen.enter(); // Use Plyr's fullscreen if available
-      // } else if (document.documentElement.requestFullscreen) {
-      //    document.documentElement.requestFullscreen();
-      // }
     }
 
-    dropzone.addEventListener('click', () => {
+    dropzone.addEventListener('click', (e) => {
+      // Prevent triggering file dialog if the button was clicked
+      if (e.target === trimButton) {
+        return;
+      }
       const input = document.createElement('input');
       input.type = 'file';
-      input.accept = 'video/mp4,video/*'; // Prioritize mp4 but allow other video types
-      input.onchange = e => {
-        if (e.target.files && e.target.files.length > 0) {
-          loadFile(e.target.files[0]);
+      input.accept = 'video/mp4,video/*';
+      input.onchange = ev => {
+        if (ev.target.files && ev.target.files.length > 0) {
+          loadFile(ev.target.files[0]);
         }
       };
       input.click();
@@ -140,11 +171,10 @@
     dropzone.addEventListener('drop', e => {
       if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
         loadFile(e.dataTransfer.files[0]);
-        // Clean up dragged files
         if (e.dataTransfer.items) {
-            e.dataTransfer.items.clear();
+          e.dataTransfer.items.clear();
         } else {
-            e.dataTransfer.clearData();
+          e.dataTransfer.clearData();
         }
       }
     });
@@ -152,22 +182,35 @@
     document.addEventListener('keydown', e => {
       const activeElement = document.activeElement;
       const isInputFocused = activeElement && (activeElement.tagName.toLowerCase() === 'input' ||
-                           activeElement.tagName.toLowerCase() === 'textarea' ||
-                           activeElement.isContentEditable ||
-                           activeElement.closest('.plyr__controls')); // Avoid interference if Plyr controls are focused
+                                activeElement.tagName.toLowerCase() === 'textarea' ||
+                                activeElement.isContentEditable ||
+                                activeElement.closest('.plyr__controls'));
 
-      if (isInputFocused) return;
+      if (isInputFocused && e.key.toLowerCase() !== 'e') return; // Allow 'e' even if focused, unless it's a text input for typing 'e'
 
-      // Only apply custom shortcuts if video is loaded and player is not in fullscreen text input mode
+      // New keybind for 'e' - generally available
+      if (e.key.toLowerCase() === 'e') {
+        // Check if the focus is on a text input field; if so, don't open the trimmer.
+        // This is a more specific check for 'e' to avoid hijacking typing.
+        if (activeElement && (activeElement.tagName.toLowerCase() === 'input' && activeElement.type !== 'button' && activeElement.type !== 'submit' && activeElement.type !== 'range') || activeElement.tagName.toLowerCase() === 'textarea' || activeElement.isContentEditable) {
+            // Do nothing if user is likely typing 'e' into an input field.
+        } else {
+            e.preventDefault();
+            openVideoTrimmer();
+            return; // Key handled, exit
+        }
+      }
+
+      // Only apply custom video shortcuts if video is loaded
       if (!playerElement.classList.contains('show') || player.source == null) return;
 
-
-      switch (e.key) {
-        case 'ArrowLeft':
+      // Existing video player shortcuts
+      switch (e.key.toLowerCase()) { // Use toLowerCase for case-insensitivity
+        case 'arrowleft':
           e.preventDefault();
           player.currentTime = Math.max(0, player.currentTime - 5);
           break;
-        case 'ArrowRight':
+        case 'arrowright':
           e.preventDefault();
           player.currentTime = Math.min(player.duration, player.currentTime + 5);
           break;
@@ -180,40 +223,24 @@
           player.speed = Math.min(4, player.speed + 0.25);
           break;
         case 'r':
-        case 'R':
           e.preventDefault();
           player.speed = 1.0;
           break;
         case ' ': // Space bar for play/pause
-            if (playerElement.classList.contains('show')) { // only if video is loaded
-                e.preventDefault();
-                player.togglePlay();
-            }
-            break;
+            e.preventDefault();
+            player.togglePlay();
+          break;
         case 'f': // Fullscreen toggle
-        case 'F':
-            if (playerElement.classList.contains('show')) {
-                e.preventDefault();
-                player.fullscreen.toggle();
-            }
-            break;
+            e.preventDefault();
+            player.fullscreen.toggle();
+          break;
         case 'm': // Mute toggle
-        case 'M':
-            if (playerElement.classList.contains('show')) {
-                e.preventDefault();
-                player.muted = !player.muted;
-            }
-            break;
+            e.preventDefault();
+            player.muted = !player.muted;
+          break;
       }
-
-      // Shift (original code used shift for play/toggle, changed to space, but keeping the logic structure if needed)
-      // if (e.code === 'ShiftLeft' || e.code === 'ShiftRight') {
-      //   e.preventDefault();
-      //   player.togglePlay();
-      // }
     });
 
-    // PWA File Handling
     if ('launchQueue' in window) {
       launchQueue.setConsumer(async (launchParams) => {
         if (launchParams.files && launchParams.files.length > 0) {
@@ -224,7 +251,6 @@
       });
     }
 
-    // Service Worker Registration
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('./sw.js')
