@@ -22,7 +22,6 @@
       overflow: hidden; /* Prevent scrollbars when video is full */
     }
 
-    /* Updated Dropzone styles */
     #dropzone {
       position: absolute;
       top: 20px;
@@ -31,80 +30,73 @@
       bottom: 20px;
       display: flex;
       flex-direction: column;
-      justify-content: space-between; /* Pushes text area up and button area down */
-      align-items: center; /* Center children horizontally */
-      text-align: center; /* Default text alignment for children */
+      justify-content: space-between;
+      align-items: center;
+      text-align: center;
       border: 4px dashed #666;
       cursor: pointer;
       z-index: 10;
-      padding: 40px; /* Increased padding for more breathing room */
+      padding: 40px;
 	  border-radius: 40px;
     }
 
-    /* Container for the main instructional text */
     #dropzone .launch-screen-text-container {
-      flex-grow: 1; /* Allows this container to expand */
+      flex-grow: 1;
       display: flex;
       flex-direction: column;
-      justify-content: center; /* Vertically center the text within this container */
-      align-items: center; /* Horizontally center the text */
-      width: 100%; /* Occupy available width */
+      justify-content: center;
+      align-items: center;
+      width: 100%;
     }
 
-    /* Styling for the main instruction text */
     #dropzone .launch-screen-text {
-      font-size: 1.8em; /* Larger, more prominent text */
-      color: #ccc;       /* Lighter color for better contrast/visibility */
-      max-width: 90%;   /* Ensure text wraps nicely and doesn't touch edges */
+      font-size: 1.8em;
+      color: #ccc;
+      max-width: 90%;
     }
 
-    /* Container for the button at the bottom */
     #dropzone .launch-screen-button-container {
-      width: 100%; /* Occupy available width, helps in centering the button if needed */
+      width: 100%;
     }
 
     #player-container {
       width: 100%;
       height: 100%;
-      display: none; /* MODIFIED: Initially hidden */
+      display: none;
       align-items: center;
       justify-content: center;
     }
 
-    /* NEW: Add a grab cursor when the player is draggable */
     #player-container[draggable="true"] {
       cursor: grab;
     }
 
-    /* NEW: Style for when the player is actively being dragged */
     #player-container.is-dragging {
         opacity: 0.6;
         cursor: grabbing;
-        border: 4px dashed #4fc3f7; /* Visual feedback similar to dropzone */
+        border: 4px dashed #4fc3f7;
     }
 
-
     video {
-      display: none; /* Hidden by default */
-      max-width: 100%; /* Ensure video fits container width */
-      max-height: 100%; /* Ensure video fits container height */
-      border-radius: 10px; /* Can be overridden by Plyr */
+      display: none;
+      max-width: 100%;
+      max-height: 100%;
+      border-radius: 10px;
     }
 
     video.show {
       display: block;
     }
 
-    /* Updated Trim Button styles */
     #trim-button {
-      background-color: #4CAF50; /* Green */
+      background-color: #4CAF50;
       border: none;
       color: white;
-      padding: 12px 25px; /* Slightly adjusted padding for a good size */
+      padding: 12px 25px;
       text-align: center;
       text-decoration: none;
       display: inline-block;
-      font-size: 1rem; /* Using rem for better accessibility */
+      font-size: 1rem;
       cursor: pointer;
       border-radius: 5px;
       z-index: 11;
@@ -124,7 +116,6 @@
     </div>
   </div>
 
-  <!-- MODIFIED: Set draggable to false initially. We will enable it with JS. -->
   <div id="player-container" draggable="false">
     <video id="player" playsinline controls></video>
   </div>
@@ -142,6 +133,9 @@
     const dropzone = document.getElementById('dropzone');
     const trimButton = document.getElementById('trim-button');
     const videoTrimAppUrl = 'https://videotrim.app/';
+
+    // NEW: Variable to hold the actual file object
+    let currentFileObject = null;
 
     function openVideoTrimmer() {
         window.open(videoTrimAppUrl, '_blank');
@@ -169,12 +163,14 @@
         return;
       }
 
+      // NEW: Store the file object for the drag-out functionality
+      currentFileObject = file;
+
       const url = URL.createObjectURL(file);
       playerElement.src = url;
       playerElement.classList.add('show');
 
       playerContainer.style.display = 'flex';
-      // NEW: Make the player container draggable now that it has content.
       playerContainer.draggable = true;
       dropzone.style.display = 'none';
 
@@ -186,37 +182,32 @@
       }
     }
 
-    // --- NEW: DRAG OUT FUNCTIONALITY ---
+    // --- MODIFIED: DRAG OUT FUNCTIONALITY ---
 
-    // Listen for the drag to start on the player container
     playerContainer.addEventListener('dragstart', (e) => {
-      // Don't start a drag if there's no video source
-      if (!player.source) {
+      // Don't start a drag if we don't have the file object
+      if (!currentFileObject) {
         e.preventDefault();
         return;
       }
 
-      // Set the data to be transferred.
-      // 'text/uri-list' is the standard for dragging links/files to a browser or desktop.
-      // The data is the video's blob URL.
+      // MODIFIED: This is the key change. We add the ACTUAL FILE to the drag operation.
+      // This makes it behave exactly like dragging from the desktop.
+      e.dataTransfer.items.add(currentFileObject);
+
+      // We can still set the URI as a fallback for simple targets like the browser's URL bar.
       e.dataTransfer.setData('text/uri-list', player.source);
-      // As a fallback for simple text inputs, also set the plain text data.
       e.dataTransfer.setData('text/plain', player.source);
-      // Set the allowed drag effect. 'copy' is appropriate here.
       e.dataTransfer.effectAllowed = 'copy';
 
-      // Add a class for visual feedback during the drag
       playerContainer.classList.add('is-dragging');
     });
 
-    // Listen for the drag to end (for any reason, e.g., drop or cancel)
     playerContainer.addEventListener('dragend', (e) => {
-      // Clean up by removing the visual feedback class
       playerContainer.classList.remove('is-dragging');
     });
 
-    // --- End of new drag out functionality ---
-
+    // --- End of drag out functionality modification ---
 
     dropzone.addEventListener('click', (e) => {
       if (e.target === trimButton || trimButton.contains(e.target) || (e.target.classList && e.target.classList.contains('launch-screen-button-container'))) {
@@ -224,7 +215,7 @@
       }
       const input = document.createElement('input');
       input.type = 'file';
-      input.accept = 'video/*'; // Relaxed to accept more video types
+      input.accept = 'video/*';
       input.onchange = ev => {
         if (ev.target.files && ev.target.files.length > 0) {
           loadFile(ev.target.files[0]);
@@ -248,11 +239,7 @@
     dropzone.addEventListener('drop', e => {
       if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
         loadFile(e.dataTransfer.files[0]);
-        if (e.dataTransfer.items) {
-          e.dataTransfer.items.clear();
-        } else {
-          e.dataTransfer.clearData();
-        }
+        e.dataTransfer.clearData();
       }
     });
 
@@ -277,38 +264,14 @@
       if (!playerElement.classList.contains('show') || player.source == null || playerContainer.style.display === 'none') return;
 
       switch (e.key.toLowerCase()) {
-        case 'arrowleft':
-          e.preventDefault();
-          player.currentTime = Math.max(0, player.currentTime - 5);
-          break;
-        case 'arrowright':
-          e.preventDefault();
-          player.currentTime = Math.min(player.duration, player.currentTime + 5);
-          break;
-        case '[':
-          e.preventDefault();
-          player.speed = Math.max(0.25, player.speed - 0.25);
-          break;
-        case ']':
-          e.preventDefault();
-          player.speed = Math.min(4, player.speed + 0.25);
-          break;
-        case 'r':
-          e.preventDefault();
-          player.speed = 1.0;
-          break;
-        case ' ':
-            e.preventDefault();
-            player.togglePlay();
-          break;
-        case 'f':
-            e.preventDefault();
-            player.fullscreen.toggle();
-          break;
-        case 'm':
-            e.preventDefault();
-            player.muted = !player.muted;
-          break;
+        case 'arrowleft': e.preventDefault(); player.currentTime = Math.max(0, player.currentTime - 5); break;
+        case 'arrowright': e.preventDefault(); player.currentTime = Math.min(player.duration, player.currentTime + 5); break;
+        case '[': e.preventDefault(); player.speed = Math.max(0.25, player.speed - 0.25); break;
+        case ']': e.preventDefault(); player.speed = Math.min(4, player.speed + 0.25); break;
+        case 'r': e.preventDefault(); player.speed = 1.0; break;
+        case ' ': e.preventDefault(); player.togglePlay(); break;
+        case 'f': e.preventDefault(); player.fullscreen.toggle(); break;
+        case 'm': e.preventDefault(); player.muted = !player.muted; break;
       }
     });
 
