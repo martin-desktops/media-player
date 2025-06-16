@@ -180,19 +180,26 @@
     // Hide the download button by default
     downloadButton.style.display = 'none';
 
-    // Double-press 'd' detection
+    // Double-press 'd' = download
     let lastDPress = 0;
     document.addEventListener('keydown', (e) => {
       if (e.key.toLowerCase() === 'd') {
         const now = Date.now();
-        if (now - lastDPress < 400) { // 400ms for double-press
+        if (now - lastDPress < 400) {
           if (playerElement.classList.contains('show') && currentFileObject) {
-            downloadButton.style.display = 'block';
+            // Trigger download directly
+            const url = URL.createObjectURL(currentFileObject);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = currentFileObject.name;
+            document.body.appendChild(a);
+            a.click();
             setTimeout(() => {
-              downloadButton.style.display = 'none';
-            }, 4000); // Hide after 4 seconds
+              document.body.removeChild(a);
+              URL.revokeObjectURL(url);
+            }, 100);
           }
-          lastDPress = 0; // reset
+          lastDPress = 0;
         } else {
           lastDPress = now;
         }
