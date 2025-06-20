@@ -182,6 +182,8 @@
 
     // Double-press 'd' = download
     let lastDPress = 0;
+    // NEW: Double-press 's' = save frame
+    let lastSPress = 0;
     document.addEventListener('keydown', (e) => {
       if (e.key.toLowerCase() === 'd') {
         const now = Date.now();
@@ -204,7 +206,51 @@
           lastDPress = now;
         }
       }
+      // NEW: Logic for 's' key to download current frame
+      if (e.key.toLowerCase() === 's') {
+        const now = Date.now();
+        if (now - lastSPress < 400) {
+          if (playerElement.classList.contains('show')) {
+            downloadCurrentFrame();
+          }
+          lastSPress = 0;
+        } else {
+          lastSPress = now;
+        }
+      }
     });
+
+    // NEW: Function to download the current video frame as an image
+    function downloadCurrentFrame() {
+      const video = playerElement;
+      if (!video || video.readyState < 2) { // Ensure video has data
+          console.error("Video is not ready to capture a frame.");
+          return;
+      }
+
+      const canvas = document.createElement('canvas');
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+      const a = document.createElement('a');
+      a.href = canvas.toDataURL('image/png');
+
+      // Create a descriptive filename
+      const timestamp = new Date(player.currentTime * 1000).toISOString().substr(11, 8).replace(/:/g, '-');
+      const videoName = currentFileObject ? currentFileObject.name.split('.').slice(0, -1).join('.') : 'video';
+      a.download = `${videoName}-frame-at-${timestamp}.png`;
+
+      document.body.appendChild(a);
+      a.click();
+
+      // Clean up the DOM
+      setTimeout(() => {
+        document.body.removeChild(a);
+      }, 100);
+    }
 
     function loadFile(file) {
       if (!file || !file.type.startsWith('video/')) {
