@@ -152,6 +152,53 @@
     .toast-notification.show {
         opacity: 1;
     }
+
+    #cheat-sheet {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background-color: rgba(0, 0, 0, 0.85);
+      color: white;
+      padding: 20px;
+      border-radius: 10px;
+      z-index: 200;
+      font-size: 1.1em;
+      display: none; /* Hidden by default */
+      max-width: 400px;
+      box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+    }
+
+    #cheat-sheet h3 {
+      margin-top: 0;
+      color: #4fc3f7;
+      text-align: center;
+      margin-bottom: 15px;
+    }
+
+    #cheat-sheet ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    #cheat-sheet li {
+      margin-bottom: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    #cheat-sheet li strong {
+      color: #ccc;
+      flex-shrink: 0;
+      margin-right: 10px;
+    }
+
+    #cheat-sheet li span {
+      text-align: right;
+      flex-grow: 1;
+    }
   </style>
 </head>
 <body>
@@ -167,6 +214,24 @@
   <div id="player-container" draggable="false" title="Tip: Drag the video out to save, or use the Download button.">
     <video id="player" playsinline controls></video>
     <button id="download-button" style="display:none;position:absolute;top:30px;right:30px;z-index:20;background:#2196f3;color:white;border:none;padding:12px 25px;border-radius:5px;font-size:1rem;cursor:pointer;">Download Video</button>
+  </div>
+
+  <div id="cheat-sheet">
+    <h3>Keyboard Shortcuts</h3>
+    <ul>
+      <li><strong>Spacebar</strong> <span>Play/Pause</span></li>
+      <li><strong>Arrow Left/Right</strong> <span>Seek +/- 5 seconds</span></li>
+      <li><strong>, / .</strong> <span>Seek +/- 1 frame</span></li>
+      <li><strong>[ / ]</strong> <span>Decrease/Increase playback speed</span></li>
+      <li><strong>R</strong> <span>Reset playback speed to 1x</span></li>
+      <li><strong>F</strong> <span>Toggle Fullscreen</span></li>
+      <li><strong>M</strong> <span>Toggle Mute</span></li>
+      <li><strong>Z</strong> <span>Mark video timestamp / Measure duration</span></li>
+      <li><strong>D (double press)</strong> <span>Download current video</span></li>
+      <li><strong>S (double press)</strong> <span>Download current frame as PNG</span></li>
+      <li><strong>E</strong> <span>Open Video Trimmer</span></li>
+      <li><strong>Shift + ?</strong> <span>Toggle this cheat sheet</span></li>
+    </ul>
   </div>
 
   <script src="https://cdn.plyr.io/3.7.8/plyr.polyfilled.js"></script>
@@ -205,6 +270,7 @@
     let lastSPress = 0;
     let zPresses = [];
     let estimatedFps = 24; // Default FPS
+    const cheatSheet = document.getElementById('cheat-sheet');
 
     function showToast(message) {
       const toast = document.createElement('div');
@@ -274,7 +340,20 @@
             zPresses.shift();
         }
       }
+
+      if (e.shiftKey && e.key === '?') {
+        e.preventDefault();
+        toggleCheatSheet();
+      }
     });
+
+    function toggleCheatSheet() {
+      if (cheatSheet.style.display === 'block') {
+        cheatSheet.style.display = 'none';
+      } else {
+        cheatSheet.style.display = 'block';
+      }
+    }
 
     // NEW: Function to download the current video frame as an image
     function downloadCurrentFrame() {
