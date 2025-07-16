@@ -334,6 +334,7 @@
     }
 
     function togglePlayPause() {
+      if (!playerElement.classList.contains('show') || player.source == null || playerContainer.style.display === 'none') return;
       player.togglePlay();
     }
 
@@ -414,6 +415,10 @@
         }
       }
 
+      if (e.key.toLowerCase() === ' ') {
+        e.preventDefault();
+      }
+
       if (!playerElement.classList.contains('show') || player.source == null || playerContainer.style.display === 'none') return;
 
       switch (e.key.toLowerCase()) {
@@ -424,7 +429,7 @@
         case '[': e.preventDefault(); changePlaybackSpeed(-0.25); break;
         case ']': e.preventDefault(); changePlaybackSpeed(0.25); break;
         case 'r': e.preventDefault(); resetPlaybackSpeed(); break;
-        case ' ': e.preventDefault(); togglePlayPause(); break;
+        case ' ': togglePlayPause(); break;
         case 'f': e.preventDefault(); toggleFullscreen(); break;
         case 'm': e.preventDefault(); toggleMute(); break;
         case 'z': handleZPress(); break;
