@@ -459,6 +459,13 @@
         e.preventDefault();
         toggleCheatSheet();
       }
+
+      if (e.key.toLowerCase() === 'escape' || e.key.toLowerCase() === 'x') {
+        if (cheatSheet.style.display === 'block') {
+          e.preventDefault();
+          toggleCheatSheet();
+        }
+      }
     });
 
     function toggleCheatSheet() {
