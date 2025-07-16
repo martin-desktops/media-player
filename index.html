@@ -204,6 +204,7 @@
     // NEW: Double-press 's' = save frame
     let lastSPress = 0;
     let zPresses = [];
+    let estimatedFps = 24; // Default FPS
 
     function showToast(message) {
       const toast = document.createElement('div');
@@ -344,6 +345,36 @@
       if(player.ready) {
         player.play();
       }
+
+      // Estimate FPS
+      let frameCount = 0;
+      let lastTime = performance.now();
+
+      function countFrames() {
+        if (player.paused || player.ended) {
+          return;
+        }
+        frameCount++;
+        const now = performance.now();
+        if (now - lastTime >= 1000) {
+          estimatedFps = frameCount;
+          frameCount = 0;
+          lastTime = now;
+        }
+        if ('requestVideoFrameCallback' in HTMLVideoElement.prototype) {
+          playerElement.requestVideoFrameCallback(countFrames);
+        } else {
+          setTimeout(countFrames, 16); // Fallback for browsers that don't support it
+        }
+      }
+
+      player.on('playing', () => {
+        if ('requestVideoFrameCallback' in HTMLVideoElement.prototype) {
+            playerElement.requestVideoFrameCallback(countFrames);
+        } else {
+            setTimeout(countFrames, 16);
+        }
+      });
     }
 
     // --- MODIFIED: DRAG OUT FUNCTIONALITY ---
@@ -430,8 +461,8 @@
       switch (e.key.toLowerCase()) {
         case 'arrowleft': e.preventDefault(); player.currentTime = Math.max(0, player.currentTime - 5); break;
         case 'arrowright': e.preventDefault(); player.currentTime = Math.min(player.duration, player.currentTime + 5); break;
-        case ',': e.preventDefault(); player.currentTime = Math.max(0, player.currentTime - (1/24)); break;
-        case '.': e.preventDefault(); player.currentTime = Math.min(player.duration, player.currentTime + (1/24)); break;
+        case ',': e.preventDefault(); player.currentTime = Math.max(0, player.currentTime - (1/estimatedFps)); break;
+        case '.': e.preventDefault(); player.currentTime = Math.min(player.duration, player.currentTime + (1/estimatedFps)); break;
         case '[': e.preventDefault(); player.speed = Math.max(0.25, player.speed - 0.25); break;
         case ']': e.preventDefault(); player.speed = Math.min(4, player.speed + 0.25); break;
         case 'r': e.preventDefault(); player.speed = 1.0; break;
