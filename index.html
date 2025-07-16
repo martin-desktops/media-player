@@ -256,7 +256,7 @@
   <div id="cheat-sheet">
     <h3>Keyboard Shortcuts</h3>
     <ul>
-      <li><button id="playPauseBtn"><span class="key-bind">Spacebar</span> <span class="action-description">Play/Pause</span></button></li>
+      <li><button id="playPauseBtn"><span class="key-bind">Spacebar / Arrow Up</span> <span class="action-description">Play/Pause</span></button></li>
       <li><button id="seekLeftBtn"><span class="key-bind">Arrow Left</span> <span class="action-description">Seek -5 seconds</span></button></li>
       <li><button id="seekRightBtn"><span class="key-bind">Arrow Right</span> <span class="action-description">Seek +5 seconds</span></button></li>
       <li><button id="seekFrameBackBtn"><span class="key-bind">,</span> <span class="action-description">Seek -1 frame</span></button></li>
@@ -281,7 +281,7 @@
     const player = new Plyr(playerElement, {
       controls: ['play', 'progress', 'current-time', 'mute', 'volume', 'settings', 'fullscreen'],
       settings: ['speed'],
-      keyboard: { focused: true, global: false },
+      keyboard: { focused: false, global: false },
     });
 
     const dropzone = document.getElementById('dropzone');
@@ -430,6 +430,7 @@
         case ']': e.preventDefault(); changePlaybackSpeed(0.25); break;
         case 'r': e.preventDefault(); resetPlaybackSpeed(); break;
         case ' ': togglePlayPause(); break;
+        case 'arrowup': togglePlayPause(); break;
         case 'f': e.preventDefault(); toggleFullscreen(); break;
         case 'm': e.preventDefault(); toggleMute(); break;
         case 'z': handleZPress(); break;
