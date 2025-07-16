@@ -133,6 +133,25 @@
       white-space: nowrap;
       z-index: 30;
     }
+
+    .toast-notification {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background-color: rgba(0, 0, 0, 0.7);
+      color: white;
+      padding: 10px 20px;
+      border-radius: 5px;
+      z-index: 100;
+      font-size: 1em;
+      opacity: 0;
+      transition: opacity 0.3s ease-in-out;
+    }
+
+    .toast-notification.show {
+        opacity: 1;
+    }
   </style>
 </head>
 <body>
@@ -184,6 +203,28 @@
     let lastDPress = 0;
     // NEW: Double-press 's' = save frame
     let lastSPress = 0;
+    let zPresses = [];
+
+    function showToast(message) {
+      const toast = document.createElement('div');
+      toast.className = 'toast-notification';
+      toast.textContent = message;
+      document.body.appendChild(toast);
+
+      // Show the toast
+      setTimeout(() => {
+        toast.classList.add('show');
+      }, 100); // Delay to allow CSS transition
+
+      // Hide and remove the toast after a few seconds
+      setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => {
+          document.body.removeChild(toast);
+        }, 300); // Wait for fade out transition to finish
+      }, 2000);
+    }
+
     document.addEventListener('keydown', (e) => {
       if (e.key.toLowerCase() === 'd') {
         const now = Date.now();
@@ -216,6 +257,19 @@
           lastSPress = 0;
         } else {
           lastSPress = now;
+        }
+      }
+
+      if (e.key.toLowerCase() === 'z') {
+        const now = Date.now();
+        zPresses.push(now);
+        if (zPresses.length > 1) {
+          const diff = zPresses[zPresses.length - 1] - zPresses[zPresses.length - 2];
+          const formattedTime = diff >= 1000 ? `${(diff / 1000).toFixed(3)}s` : `${diff}ms`;
+          showToast(formattedTime);
+        }
+        if (zPresses.length > 2) {
+            zPresses.shift();
         }
       }
     });
