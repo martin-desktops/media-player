@@ -261,11 +261,12 @@
       }
 
       if (e.key.toLowerCase() === 'z') {
-        const now = Date.now();
-        zPresses.push(now);
+        if (!playerElement.classList.contains('show')) return;
+        const currentTime = player.currentTime;
+        zPresses.push(currentTime);
         if (zPresses.length > 1) {
-          const diff = zPresses[zPresses.length - 1] - zPresses[zPresses.length - 2];
-          const formattedTime = diff >= 1000 ? `${(diff / 1000).toFixed(3)}s` : `${diff}ms`;
+          const diff = Math.abs(zPresses[zPresses.length - 1] - zPresses[zPresses.length - 2]);
+          const formattedTime = diff >= 1 ? `${diff.toFixed(3)}s` : `${Math.round(diff * 1000)}ms`;
           showToast(formattedTime);
         }
         if (zPresses.length > 2) {
