@@ -235,6 +235,39 @@
       flex-grow: 1;
       text-align: right;
     }
+
+    #video-info-panel {
+      position: fixed;
+      top: 30px;
+      left: 30px;
+      background-color: rgba(0, 0, 0, 0.85);
+      color: white;
+      padding: 15px;
+      border-radius: 10px;
+      z-index: 150;
+      font-size: 0.9em;
+      display: none; /* Hidden by default */
+      max-width: 250px;
+      box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+    }
+
+    #video-info-panel h4 {
+      margin-top: 0;
+      margin-bottom: 10px;
+      color: #4fc3f7;
+      text-align: center;
+    }
+
+    #video-info-panel p {
+      margin: 5px 0;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    #video-info-panel p strong {
+      color: #ccc;
+      margin-right: 10px;
+    }
   </style>
 </head>
 <body>
@@ -272,7 +305,17 @@
       <li><button id="doubleSPressBtn"><span class="key-bind">S (double press)</span> <span class="action-description">Download current frame as PNG</span></button></li>
       <li><button id="trimmerBtn"><span class="key-bind">E</span> <span class="action-description">Open Video Trimmer</span></button></li>
       <li><button id="toggleCheatSheetBtn"><span class="key-bind">Shift + ?</span> <span class="action-description">Toggle this cheat sheet</span></button></li>
+      <li><button id="toggleInfoPanelBtn"><span class="key-bind">I</span> <span class="action-description">Toggle Video Info</span></button></li>
     </ul>
+  </div>
+
+  <div id="video-info-panel">
+    <h4>Video Information</h4>
+    <p><strong>File Name:</strong> <span id="info-filename">N/A</span></p>
+    <p><strong>Duration:</strong> <span id="info-duration">N/A</span></p>
+    <p><strong>Resolution:</strong> <span id="info-resolution">N/A</span></p>
+    <p><strong>Estimated FPS:</strong> <span id="info-fps">N/A</span></p>
+    <p><strong>File Size:</strong> <span id="info-filesize">N/A</span></p>
   </div>
 
   <script src="https://cdn.plyr.io/3.7.8/plyr.polyfilled.js"></script>
@@ -315,6 +358,12 @@
     let loopActive = false;
     let estimatedFps = 24; // Default FPS
     const cheatSheet = document.getElementById('cheat-sheet');
+    const videoInfoPanel = document.getElementById('video-info-panel');
+    const infoFileName = document.getElementById('info-filename');
+    const infoDuration = document.getElementById('info-duration');
+    const infoResolution = document.getElementById('info-resolution');
+    const infoFps = document.getElementById('info-fps');
+    const infoFileSize = document.getElementById('info-filesize');
 
     function showToast(message) {
       const toast = document.createElement('div');
@@ -506,6 +555,11 @@
           toggleCheatSheet();
         }
       }
+
+      if (e.key.toLowerCase() === 'i') {
+        e.preventDefault();
+        toggleVideoInfoPanel();
+      }
     });
 
     function toggleCheatSheet() {
@@ -513,6 +567,22 @@
         cheatSheet.style.display = 'none';
       } else {
         cheatSheet.style.display = 'block';
+      }
+    }
+
+    function toggleVideoInfoPanel() {
+      if (videoInfoPanel.style.display === 'block') {
+        videoInfoPanel.style.display = 'none';
+      } else {
+        videoInfoPanel.style.display = 'block';
+      }
+    }
+
+    function toggleVideoInfoPanel() {
+      if (videoInfoPanel.style.display === 'block') {
+        videoInfoPanel.style.display = 'none';
+      } else {
+        videoInfoPanel.style.display = 'block';
       }
     }
 
@@ -581,9 +651,11 @@
 
       player.once('ready', () => {
         player.play();
+        updateVideoInfo(); // Update info when video is ready
       });
       if(player.ready) {
         player.play();
+        updateVideoInfo(); // Update info if already ready
       }
 
       // Estimate FPS
@@ -600,6 +672,7 @@
           estimatedFps = frameCount;
           frameCount = 0;
           lastTime = now;
+          updateVideoInfo(); // Update FPS in info panel
         }
         if ('requestVideoFrameCallback' in HTMLVideoElement.prototype) {
           playerElement.requestVideoFrameCallback(countFrames);
@@ -624,6 +697,23 @@
           }
         }
       });
+    }
+
+    function updateVideoInfo() {
+      if (!currentFileObject) return;
+
+      infoFileName.textContent = currentFileObject.name;
+      infoDuration.textContent = `${player.duration.toFixed(2)}s`;
+      infoResolution.textContent = `${playerElement.videoWidth}x${playerElement.videoHeight}`;
+      infoFps.textContent = `${estimatedFps.toFixed(2)} FPS`;
+
+      const fileSizeKB = currentFileObject.size / 1024;
+      const fileSizeMB = fileSizeKB / 1024;
+      if (fileSizeMB >= 1) {
+        infoFileSize.textContent = `${fileSizeMB.toFixed(2)} MB`;
+      } else {
+        infoFileSize.textContent = `${fileSizeKB.toFixed(2)} KB`;
+      }
     }
 
     // --- MODIFIED: DRAG OUT FUNCTIONALITY ---
@@ -780,6 +870,7 @@
     document.getElementById('doubleSPressBtn').addEventListener('click', handleDoubleSPress);
     document.getElementById('trimmerBtn').addEventListener('click', openVideoTrimmer);
     document.getElementById('toggleCheatSheetBtn').addEventListener('click', toggleCheatSheet);
+    document.getElementById('toggleInfoPanelBtn').addEventListener('click', toggleVideoInfoPanel);
   </script>
 </body>
 </html>
