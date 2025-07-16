@@ -267,6 +267,7 @@
       <li><button id="fullscreenBtn"><span class="key-bind">F</span> <span class="action-description">Toggle Fullscreen</span></button></li>
       <li><button id="muteBtn"><span class="key-bind">M</span> <span class="action-description">Toggle Mute</span></button></li>
       <li><button id="zKeyBtn"><span class="key-bind">Z</span> <span class="action-description">Mark video timestamp / Measure duration</span></button></li>
+      <li><button id="xKeyBtn"><span class="key-bind">X</span> <span class="action-description">Set/Clear A-B Loop</span></button></li>
       <li><button id="doubleDPressBtn"><span class="key-bind">D (double press)</span> <span class="action-description">Download current video</span></button></li>
       <li><button id="doubleSPressBtn"><span class="key-bind">S (double press)</span> <span class="action-description">Download current frame as PNG</span></button></li>
       <li><button id="trimmerBtn"><span class="key-bind">E</span> <span class="action-description">Open Video Trimmer</span></button></li>
@@ -310,6 +311,8 @@
     // NEW: Double-press 's' = save frame
     let lastSPress = 0;
     let zPresses = [];
+    let loopPoints = []; // Stores [A, B] for looping
+    let loopActive = false;
     let estimatedFps = 24; // Default FPS
     const cheatSheet = document.getElementById('cheat-sheet');
 
@@ -409,6 +412,29 @@
       }
     }
 
+    function handleXPress() {
+      if (!playerElement.classList.contains('show')) return;
+      const currentTime = player.currentTime;
+      if (loopPoints.length === 0) {
+        // First press: Set point A
+        loopPoints.push(currentTime);
+        showToast(`Loop Point A set at ${currentTime.toFixed(3)}s`);
+      } else if (loopPoints.length === 1) {
+        // Second press: Set point B and activate loop
+        loopPoints.push(currentTime);
+        loopPoints.sort((a, b) => a - b); // Ensure A is before B
+        loopActive = true;
+        showToast(`Loop Point B set at ${currentTime.toFixed(3)}s. Looping active.`);
+        player.currentTime = loopPoints[0]; // Jump to A
+        player.play();
+      } else {
+        // Third press: Clear loop
+        loopPoints = [];
+        loopActive = false;
+        showToast('Loop cleared.');
+      }
+    }
+
     document.addEventListener('keydown', (e) => {
       const activeElement = document.activeElement;
       const isInputFocused = activeElement && (activeElement.tagName.toLowerCase() === 'input' ||
@@ -446,6 +472,7 @@
         case 'f': e.preventDefault(); toggleFullscreen(); break;
         case 'm': e.preventDefault(); toggleMute(); break;
         case 'z': handleZPress(); break;
+        case 'x': handleXPress(); break;
       }
 
       if (e.key.toLowerCase() === 'd') {
@@ -586,6 +613,15 @@
             playerElement.requestVideoFrameCallback(countFrames);
         } else {
             setTimeout(countFrames, 16);
+        }
+      });
+
+      player.on('timeupdate', () => {
+        if (loopActive && loopPoints.length === 2) {
+          if (player.currentTime >= loopPoints[1]) {
+            player.currentTime = loopPoints[0];
+            player.play(); // Ensure playback continues if it was playing
+          }
         }
       });
     }
@@ -739,6 +775,7 @@
     document.getElementById('fullscreenBtn').addEventListener('click', toggleFullscreen);
     document.getElementById('muteBtn').addEventListener('click', toggleMute);
     document.getElementById('zKeyBtn').addEventListener('click', handleZPress);
+    document.getElementById('xKeyBtn').addEventListener('click', handleXPress);
     document.getElementById('doubleDPressBtn').addEventListener('click', handleDoubleDPress);
     document.getElementById('doubleSPressBtn').addEventListener('click', handleDoubleSPress);
     document.getElementById('trimmerBtn').addEventListener('click', openVideoTrimmer);
