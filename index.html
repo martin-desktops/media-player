@@ -120,6 +120,24 @@
       cursor: pointer;
     }
 
+    #help-button {
+      position: absolute;
+      top: 30px;
+      right: 180px; /* Adjust position to not overlap with download button */
+      z-index: 20;
+      background: #607d8b;
+      color: white;
+      border: none;
+      padding: 12px 25px;
+      border-radius: 5px;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+
+    #help-button:hover {
+      background-color: #455a64;
+    }
+
     #player-container[title]:hover:after {
       content: attr(title);
       position: absolute;
@@ -214,6 +232,7 @@
   <div id="player-container" draggable="false" title="Tip: Drag the video out to save, or use the Download button.">
     <video id="player" playsinline controls></video>
     <button id="download-button" style="display:none;position:absolute;top:30px;right:30px;z-index:20;background:#2196f3;color:white;border:none;padding:12px 25px;border-radius:5px;font-size:1rem;cursor:pointer;">Download Video</button>
+    <button id="help-button">Help (?)</button>
   </div>
 
   <div id="cheat-sheet">
@@ -247,6 +266,7 @@
     const dropzone = document.getElementById('dropzone');
     const trimButton = document.getElementById('trim-button');
     const downloadButton = document.getElementById('download-button');
+    const helpButton = document.getElementById('help-button');
     const videoTrimAppUrl = 'https://videotrim.app/';
 
     // NEW: Variable to hold the actual file object
@@ -588,6 +608,10 @@
           });
       });
     }
+
+    helpButton.addEventListener('click', () => {
+      toggleCheatSheet();
+    });
   </script>
 </body>
 </html>
