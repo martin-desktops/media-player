@@ -67,15 +67,7 @@
       justify-content: center;
     }
 
-    #player-container[draggable="true"] {
-      cursor: grab;
-    }
-
-    #player-container.is-dragging {
-        opacity: 0.6;
-        cursor: grabbing;
-        border: 4px dashed #4fc3f7;
-    }
+    
 
     video {
       display: none;
@@ -280,7 +272,7 @@
     </div>
   </div>
 
-  <div id="player-container" draggable="false" title="Tip: Drag the video out to save, or use the Download button.">
+  <div id="player-container" draggable="false">
     <video id="player" playsinline controls></video>
     <button id="download-button" style="display:none;position:absolute;top:30px;right:30px;z-index:20;background:#2196f3;color:white;border:none;padding:12px 25px;border-radius:5px;font-size:1rem;cursor:pointer;">Download Video</button>
     <button id="help-button">Help (?)</button>
@@ -718,28 +710,7 @@
 
     // --- MODIFIED: DRAG OUT FUNCTIONALITY ---
 
-    playerContainer.addEventListener('dragstart', (e) => {
-      // Don't start a drag if we don't have the file object
-      if (!currentFileObject) {
-        e.preventDefault();
-        return;
-      }
-
-      // MODIFIED: This is the key change. We add the ACTUAL FILE to the drag operation.
-      // This makes it behave exactly like dragging from the desktop.
-      e.dataTransfer.items.add(currentFileObject);
-
-      // We can still set the URI as a fallback for simple targets like the browser's URL bar.
-      e.dataTransfer.setData('text/uri-list', player.source);
-      e.dataTransfer.setData('text/plain', player.source);
-      e.dataTransfer.effectAllowed = 'copy';
-
-      playerContainer.classList.add('is-dragging');
-    });
-
-    playerContainer.addEventListener('dragend', (e) => {
-      playerContainer.classList.remove('is-dragging');
-    });
+    
 
     // --- End of drag out functionality modification ---
 
