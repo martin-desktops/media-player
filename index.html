@@ -207,15 +207,33 @@
       align-items: center;
     }
 
-    #cheat-sheet li strong {
-      color: #ccc;
-      flex-shrink: 0;
-      margin-right: 10px;
+    #cheat-sheet li button {
+      background: none;
+      border: 1px solid #4fc3f7;
+      color: white;
+      padding: 8px 12px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 0.9em;
+      transition: background-color 0.2s, border-color 0.2s;
+      width: 100%; /* Make buttons take full width */
+      text-align: left;
     }
 
-    #cheat-sheet li span {
-      text-align: right;
+    #cheat-sheet li button:hover {
+      background-color: #4fc3f7;
+      border-color: #4fc3f7;
+    }
+
+    #cheat-sheet li button span.key-bind {
+      font-weight: bold;
+      margin-right: 10px;
+      color: #ccc;
+    }
+
+    #cheat-sheet li button span.action-description {
       flex-grow: 1;
+      text-align: right;
     }
   </style>
 </head>
@@ -238,18 +256,21 @@
   <div id="cheat-sheet">
     <h3>Keyboard Shortcuts</h3>
     <ul>
-      <li><strong>Spacebar</strong> <span>Play/Pause</span></li>
-      <li><strong>Arrow Left/Right</strong> <span>Seek +/- 5 seconds</span></li>
-      <li><strong>, / .</strong> <span>Seek +/- 1 frame</span></li>
-      <li><strong>[ / ]</strong> <span>Decrease/Increase playback speed</span></li>
-      <li><strong>R</strong> <span>Reset playback speed to 1x</span></li>
-      <li><strong>F</strong> <span>Toggle Fullscreen</span></li>
-      <li><strong>M</strong> <span>Toggle Mute</span></li>
-      <li><strong>Z</strong> <span>Mark video timestamp / Measure duration</span></li>
-      <li><strong>D (double press)</strong> <span>Download current video</span></li>
-      <li><strong>S (double press)</strong> <span>Download current frame as PNG</span></li>
-      <li><strong>E</strong> <span>Open Video Trimmer</span></li>
-      <li><strong>Shift + ?</strong> <span>Toggle this cheat sheet</span></li>
+      <li><button id="playPauseBtn"><span class="key-bind">Spacebar</span> <span class="action-description">Play/Pause</span></button></li>
+      <li><button id="seekLeftBtn"><span class="key-bind">Arrow Left</span> <span class="action-description">Seek -5 seconds</span></button></li>
+      <li><button id="seekRightBtn"><span class="key-bind">Arrow Right</span> <span class="action-description">Seek +5 seconds</span></button></li>
+      <li><button id="seekFrameBackBtn"><span class="key-bind">,</span> <span class="action-description">Seek -1 frame</span></button></li>
+      <li><button id="seekFrameForwardBtn"><span class="key-bind">.</span> <span class="action-description">Seek +1 frame</span></button></li>
+      <li><button id="speedDownBtn"><span class="key-bind">[</span> <span class="action-description">Decrease playback speed</span></button></li>
+      <li><button id="speedUpBtn"><span class="key-bind">]</span> <span class="action-description">Increase playback speed</span></button></li>
+      <li><button id="resetSpeedBtn"><span class="key-bind">R</span> <span class="action-description">Reset playback speed to 1x</span></button></li>
+      <li><button id="fullscreenBtn"><span class="key-bind">F</span> <span class="action-description">Toggle Fullscreen</span></button></li>
+      <li><button id="muteBtn"><span class="key-bind">M</span> <span class="action-description">Toggle Mute</span></button></li>
+      <li><button id="zKeyBtn"><span class="key-bind">Z</span> <span class="action-description">Mark video timestamp / Measure duration</span></button></li>
+      <li><button id="doubleDPressBtn"><span class="key-bind">D (double press)</span> <span class="action-description">Download current video</span></button></li>
+      <li><button id="doubleSPressBtn"><span class="key-bind">S (double press)</span> <span class="action-description">Download current frame as PNG</span></button></li>
+      <li><button id="trimmerBtn"><span class="key-bind">E</span> <span class="action-description">Open Video Trimmer</span></button></li>
+      <li><button id="toggleCheatSheetBtn"><span class="key-bind">Shift + ?</span> <span class="action-description">Toggle this cheat sheet</span></button></li>
     </ul>
   </div>
 
@@ -312,52 +333,120 @@
       }, 2000);
     }
 
+    function togglePlayPause() {
+      player.togglePlay();
+    }
+
+    function seekFiveSeconds(direction) {
+      player.currentTime = Math.max(0, Math.min(player.duration, player.currentTime + (5 * direction)));
+    }
+
+    function seekOneFrame(direction) {
+      player.currentTime = Math.max(0, Math.min(player.duration, player.currentTime + (direction / estimatedFps)));
+    }
+
+    function changePlaybackSpeed(change) {
+      player.speed = Math.max(0.25, Math.min(4, player.speed + change));
+    }
+
+    function resetPlaybackSpeed() {
+      player.speed = 1.0;
+    }
+
+    function toggleFullscreen() {
+      player.fullscreen.toggle();
+    }
+
+    function toggleMute() {
+      player.muted = !player.muted;
+    }
+
+    function handleZPress() {
+      if (!playerElement.classList.contains('show')) return;
+      const currentTime = player.currentTime;
+      zPresses.push(currentTime);
+      if (zPresses.length > 1) {
+        const diff = Math.abs(zPresses[zPresses.length - 1] - zPresses[zPresses.length - 2]);
+        const formattedTime = diff >= 1 ? `${diff.toFixed(3)}s` : `${Math.round(diff * 1000)}ms`;
+        showToast(formattedTime);
+      }
+      if (zPresses.length > 2) {
+          zPresses.shift();
+      }
+    }
+
+    function handleDoubleDPress() {
+      if (playerElement.classList.contains('show') && currentFileObject) {
+        const url = URL.createObjectURL(currentFileObject);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = currentFileObject.name;
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(() => {
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+        }, 100);
+      }
+    }
+
+    function handleDoubleSPress() {
+      if (playerElement.classList.contains('show')) {
+        downloadCurrentFrame();
+      }
+    }
+
     document.addEventListener('keydown', (e) => {
+      const activeElement = document.activeElement;
+      const isInputFocused = activeElement && (activeElement.tagName.toLowerCase() === 'input' ||
+                                activeElement.tagName.toLowerCase() === 'textarea' ||
+                                activeElement.isContentEditable ||
+                                activeElement.closest('.plyr__controls'));
+
+      if (isInputFocused && e.key.toLowerCase() !== 'e') return;
+
+      if (e.key.toLowerCase() === 'e') {
+        if (activeElement && (activeElement.tagName.toLowerCase() === 'input' && activeElement.type !== 'button' && activeElement.type !== 'submit' && activeElement.type !== 'range') || activeElement.tagName.toLowerCase() === 'textarea' || activeElement.isContentEditable) {
+        } else {
+            e.preventDefault();
+            openVideoTrimmer();
+            return;
+        }
+      }
+
+      if (!playerElement.classList.contains('show') || player.source == null || playerContainer.style.display === 'none') return;
+
+      switch (e.key.toLowerCase()) {
+        case 'arrowleft': e.preventDefault(); seekFiveSeconds(-1); break;
+        case 'arrowright': e.preventDefault(); seekFiveSeconds(1); break;
+        case ',': e.preventDefault(); seekOneFrame(-1); break;
+        case '.': e.preventDefault(); seekOneFrame(1); break;
+        case '[': e.preventDefault(); changePlaybackSpeed(-0.25); break;
+        case ']': e.preventDefault(); changePlaybackSpeed(0.25); break;
+        case 'r': e.preventDefault(); resetPlaybackSpeed(); break;
+        case ' ': e.preventDefault(); togglePlayPause(); break;
+        case 'f': e.preventDefault(); toggleFullscreen(); break;
+        case 'm': e.preventDefault(); toggleMute(); break;
+        case 'z': handleZPress(); break;
+      }
+
       if (e.key.toLowerCase() === 'd') {
         const now = Date.now();
         if (now - lastDPress < 400) {
-          if (playerElement.classList.contains('show') && currentFileObject) {
-            // Trigger download directly
-            const url = URL.createObjectURL(currentFileObject);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = currentFileObject.name;
-            document.body.appendChild(a);
-            a.click();
-            setTimeout(() => {
-              document.body.removeChild(a);
-              URL.revokeObjectURL(url);
-            }, 100);
-          }
+          handleDoubleDPress();
           lastDPress = 0;
         } else {
           lastDPress = now;
         }
       }
-      // NEW: Logic for 's' key to download current frame
+
       if (e.key.toLowerCase() === 's') {
         const now = Date.now();
         if (now - lastSPress < 400) {
-          if (playerElement.classList.contains('show')) {
-            downloadCurrentFrame();
-          }
+          handleDoubleSPress();
           lastSPress = 0;
         } else {
           lastSPress = now;
-        }
-      }
-
-      if (e.key.toLowerCase() === 'z') {
-        if (!playerElement.classList.contains('show')) return;
-        const currentTime = player.currentTime;
-        zPresses.push(currentTime);
-        if (zPresses.length > 1) {
-          const diff = Math.abs(zPresses[zPresses.length - 1] - zPresses[zPresses.length - 2]);
-          const formattedTime = diff >= 1 ? `${diff.toFixed(3)}s` : `${Math.round(diff * 1000)}ms`;
-          showToast(formattedTime);
-        }
-        if (zPresses.length > 2) {
-            zPresses.shift();
         }
       }
 
@@ -612,6 +701,23 @@
     helpButton.addEventListener('click', () => {
       toggleCheatSheet();
     });
+
+    // Add event listeners for cheat sheet buttons
+    document.getElementById('playPauseBtn').addEventListener('click', togglePlayPause);
+    document.getElementById('seekLeftBtn').addEventListener('click', () => seekFiveSeconds(-1));
+    document.getElementById('seekRightBtn').addEventListener('click', () => seekFiveSeconds(1));
+    document.getElementById('seekFrameBackBtn').addEventListener('click', () => seekOneFrame(-1));
+    document.getElementById('seekFrameForwardBtn').addEventListener('click', () => seekOneFrame(1));
+    document.getElementById('speedDownBtn').addEventListener('click', () => changePlaybackSpeed(-0.25));
+    document.getElementById('speedUpBtn').addEventListener('click', () => changePlaybackSpeed(0.25));
+    document.getElementById('resetSpeedBtn').addEventListener('click', resetPlaybackSpeed);
+    document.getElementById('fullscreenBtn').addEventListener('click', toggleFullscreen);
+    document.getElementById('muteBtn').addEventListener('click', toggleMute);
+    document.getElementById('zKeyBtn').addEventListener('click', handleZPress);
+    document.getElementById('doubleDPressBtn').addEventListener('click', handleDoubleDPress);
+    document.getElementById('doubleSPressBtn').addEventListener('click', handleDoubleSPress);
+    document.getElementById('trimmerBtn').addEventListener('click', openVideoTrimmer);
+    document.getElementById('toggleCheatSheetBtn').addEventListener('click', toggleCheatSheet);
   </script>
 </body>
 </html>
