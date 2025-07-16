@@ -343,7 +343,19 @@
     }
 
     function seekOneFrame(direction) {
-      player.currentTime = Math.max(0, Math.min(player.duration, player.currentTime + (direction / estimatedFps)));
+      if (!player.paused) {
+        player.pause(); // Pause the video for accurate frame stepping
+      }
+      const frameDuration = 1 / estimatedFps;
+      let targetTime = player.currentTime + (direction * frameDuration);
+
+      // Clamp the target time within video duration
+      targetTime = Math.max(0, Math.min(player.duration, targetTime));
+
+      // Attempt to snap to the nearest "frame" time to mitigate floating point issues
+      targetTime = Math.round(targetTime / frameDuration) * frameDuration;
+
+      player.currentTime = targetTime;
     }
 
     function changePlaybackSpeed(change) {
