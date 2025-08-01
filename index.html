@@ -309,7 +309,7 @@
   <div id="cheat-sheet">
     <h3>Keyboard Shortcuts</h3>
     <ul>
-      <li><button id="playPauseBtn"><span class="key-bind">Spacebar / Arrow Up</span> <span class="action-description">Play/Pause</span></button></li>
+      <li><button id="playPauseBtn"><span class="key-bind">Arrow Up</span> <span class="action-description">Play/Pause</span></button></li>
       <li><button id="seekLeftBtn"><span class="key-bind">Arrow Left</span> <span class="action-description">Seek -5 seconds</span></button></li>
       <li><button id="seekRightBtn"><span class="key-bind">Arrow Right</span> <span class="action-description">Seek +5 seconds</span></button></li>
       <li><button id="seekFrameBackBtn"><span class="key-bind">,</span> <span class="action-description">Seek -1 frame</span></button></li>
@@ -522,9 +522,7 @@
         }
       }
 
-      if (e.key.toLowerCase() === ' ') {
-        e.preventDefault();
-      }
+      
 
       if (!playerElement.classList.contains('show') || player.source == null || playerContainer.style.display === 'none') return;
 
@@ -536,7 +534,6 @@
         case '[': e.preventDefault(); changePlaybackSpeed(-0.25); break;
         case ']': e.preventDefault(); changePlaybackSpeed(0.25); break;
         case 'r': e.preventDefault(); resetPlaybackSpeed(); break;
-        case ' ': togglePlayPause(); break;
         case 'arrowup': togglePlayPause(); break;
         case 'f': e.preventDefault(); toggleFullscreen(); break;
         case 'm': e.preventDefault(); toggleMute(); break;
@@ -776,39 +773,7 @@
       }
     });
 
-    document.addEventListener('keydown', e => {
-      const activeElement = document.activeElement;
-      const isInputFocused = activeElement && (activeElement.tagName.toLowerCase() === 'input' ||
-                                activeElement.tagName.toLowerCase() === 'textarea' ||
-                                activeElement.isContentEditable ||
-                                activeElement.closest('.plyr__controls'));
-
-      if (isInputFocused && e.key.toLowerCase() !== 'e') return;
-
-      if (e.key.toLowerCase() === 'e') {
-        if (activeElement && (activeElement.tagName.toLowerCase() === 'input' && activeElement.type !== 'button' && activeElement.type !== 'submit' && activeElement.type !== 'range') || activeElement.tagName.toLowerCase() === 'textarea' || activeElement.isContentEditable) {
-        } else {
-            e.preventDefault();
-            openVideoTrimmer();
-            return;
-        }
-      }
-
-      if (!playerElement.classList.contains('show') || player.source == null || playerContainer.style.display === 'none') return;
-
-      switch (e.key.toLowerCase()) {
-        case 'arrowleft': e.preventDefault(); player.currentTime = Math.max(0, player.currentTime - 5); break;
-        case 'arrowright': e.preventDefault(); player.currentTime = Math.min(player.duration, player.currentTime + 5); break;
-        case ',': e.preventDefault(); player.currentTime = Math.max(0, player.currentTime - (1/estimatedFps)); break;
-        case '.': e.preventDefault(); player.currentTime = Math.min(player.duration, player.currentTime + (1/estimatedFps)); break;
-        case '[': e.preventDefault(); player.speed = Math.max(0.25, player.speed - 0.25); break;
-        case ']': e.preventDefault(); player.speed = Math.min(4, player.speed + 0.25); break;
-        case 'r': e.preventDefault(); player.speed = 1.0; break;
-        case ' ': e.preventDefault(); player.togglePlay(); break;
-        case 'f': e.preventDefault(); player.fullscreen.toggle(); break;
-        case 'm': e.preventDefault(); player.muted = !player.muted; break;
-      }
-    });
+    
 
     // Download button functionality
     downloadButton.addEventListener('click', () => {
