@@ -179,6 +179,8 @@
       display: none; /* Hidden by default */
       max-width: 400px;
       box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+      max-height: 80vh;
+      overflow-y: auto;
     }
 
     #cheat-sheet h3 {
@@ -261,6 +263,30 @@
     #video-info-panel p strong {
       color: #ccc;
       margin-right: 10px;
+    }
+
+    @media (max-width: 600px) {
+      #cheat-sheet {
+        width: 90%;
+        max-width: none;
+        padding: 15px;
+        font-size: 1em;
+      }
+
+      #cheat-sheet li button {
+        padding: 10px;
+        font-size: 0.8em;
+      }
+
+      #cheat-sheet li button span.key-bind {
+        display: block;
+        margin-bottom: 5px;
+      }
+
+      #cheat-sheet li button span.action-description {
+        display: block;
+        text-align: left;
+      }
     }
   </style>
 </head>
