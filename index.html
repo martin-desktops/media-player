@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Fullscreen Drag & Drop Video Player</title>
+  <title>Dream Video Player</title>
   <link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css" />
   <link rel="manifest" href="manifest.json">
   
@@ -309,7 +309,7 @@
   <div id="cheat-sheet">
     <h3>Keyboard Shortcuts</h3>
     <ul>
-      <li><button id="playPauseBtn"><span class="key-bind">Arrow Up</span> <span class="action-description">Play/Pause</span></button></li>
+      <li><button id="playPauseBtn"><span class="key-bind">Spacebar / Arrow Up</span> <span class="action-description">Play/Pause</span></button></li>
       <li><button id="seekLeftBtn"><span class="key-bind">Arrow Left</span> <span class="action-description">Seek -5 seconds</span></button></li>
       <li><button id="seekRightBtn"><span class="key-bind">Arrow Right</span> <span class="action-description">Seek +5 seconds</span></button></li>
       <li><button id="seekFrameBackBtn"><span class="key-bind">,</span> <span class="action-description">Seek -1 frame</span></button></li>
@@ -505,6 +505,13 @@
     }
 
     document.addEventListener('keydown', (e) => {
+      if (e.key.toLowerCase() === ' ') {
+        e.preventDefault();
+        togglePlayPause();
+      }
+    });
+
+    document.addEventListener('keydown', (e) => {
       const activeElement = document.activeElement;
       const isInputFocused = activeElement && (activeElement.tagName.toLowerCase() === 'input' ||
                                 activeElement.tagName.toLowerCase() === 'textarea' ||
@@ -534,6 +541,7 @@
         case '[': e.preventDefault(); changePlaybackSpeed(-0.25); break;
         case ']': e.preventDefault(); changePlaybackSpeed(0.25); break;
         case 'r': e.preventDefault(); resetPlaybackSpeed(); break;
+        case ' ': togglePlayPause(); break;
         case 'arrowup': togglePlayPause(); break;
         case 'f': e.preventDefault(); toggleFullscreen(); break;
         case 'm': e.preventDefault(); toggleMute(); break;
