@@ -14,5 +14,15 @@
       "type": "image/png",
       "purpose": "any maskable"
     }
+  ],
+  "file_handlers": [
+    {
+      "action": ".",
+      "accept": {
+        "video/x-matroska": [".mkv"],
+        "video/mp4": [".mp4"]
+      },
+      "launch_type": "single-client"
+    }
   ]
 }
