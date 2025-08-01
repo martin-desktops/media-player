@@ -507,9 +507,10 @@
     document.addEventListener('keydown', (e) => {
       if (e.key.toLowerCase() === ' ') {
         e.preventDefault();
+        e.stopPropagation();
         togglePlayPause();
       }
-    });
+    }, true);
 
     document.addEventListener('keydown', (e) => {
       const activeElement = document.activeElement;
@@ -541,7 +542,6 @@
         case '[': e.preventDefault(); changePlaybackSpeed(-0.25); break;
         case ']': e.preventDefault(); changePlaybackSpeed(0.25); break;
         case 'r': e.preventDefault(); resetPlaybackSpeed(); break;
-        case ' ': togglePlayPause(); break;
         case 'arrowup': togglePlayPause(); break;
         case 'f': e.preventDefault(); toggleFullscreen(); break;
         case 'm': e.preventDefault(); toggleMute(); break;
